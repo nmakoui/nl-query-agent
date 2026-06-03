@@ -353,3 +353,56 @@ def run_conversational_loop():
 if __name__ == "__main__":
     run_conversational_loop()
 
+def intercept_semantic_vector_query(user_question, similarity_threshold=0.3, limit_count=5):
+    """
+    HACKATHON VECTOR INTERCEPTOR:
+    Call this function first before sending a query to the standard LLM SQL loop.
+    If the prompt looks conceptually soft or descriptive, it generates a vector query instead.
+    """
+    # 1. Check if the query is a descriptive concept rather than an explicit metadata filter
+    semantic_indicators = ["like", "find items that", "looking for", "recommend", "similar to", "good for", "comfortable", "bad", "perfect"]
+    is_semantic = any(indicator in user_question.lower() for indicator in semantic_indicators)
+    
+    # Also evaluate length - long descriptive sentences are usually semantic
+    if len(user_question.split()) > 4:
+        is_semantic = True
+        
+    if not is_semantic:
+        # Return None to signal the main loop to run standard metadata Text-to-SQL generation
+        return None
+
+    try:
+        # Setup secure cloud token identity elements using Instance Principals
+        signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
+        gen_ai_client = oci.generative_ai_inference.GenerativeAiInferenceClient(
+            config={}, signer=signer, service_endpoint="https://inference.generativeai.uk-london-1.oci.oraclecloud.com"
+        )
+        compartment_id = "ocid1.tenancy.oc1..aaaaaaaapigjcw7dwdp6onerp5wqcu3z5pzsckmokdiqjezvoodfi2corv6q"
+
+        # Generate a runtime query vector embedding using SEARCH_QUERY mode
+        embed_request = oci.generative_ai_inference.models.EmbedTextDetails(
+            inputs=[user_question],
+            serving_mode=oci.generative_ai_inference.models.OnDemandServingMode(model_id="cohere.embed-english-v3.0"),
+            compartment_id=compartment_id,
+            input_type="SEARCH_QUERY" # Crucial: Search query mode optimization for search items
+        )
+        
+        embed_response = gen_ai_client.embed_text(embed_request)
+        query_vector_array = embed_response.data.embeddings[0]
+        query_vector_string = json.dumps(query_vector_array)
+
+        # Dynamic structure generation pointing straight to your custom PL/SQL 19c math matrix
+        # Assumes uppercase table name "AMAZON" based on standard metadata conventions
+        rag_sql_query = f"""SELECT product_name, category, actual_price, rating, about_product
+FROM AMAZON 
+WHERE PRODUCT_VECTOR_CLOB IS NOT NULL 
+  AND CALCULATE_COSINE_SIMILARITY(PRODUCT_VECTOR_CLOB, '{query_vector_string}') >= {similarity_threshold}
+ORDER BY CALCULATE_COSINE_SIMILARITY(PRODUCT_VECTOR_CLOB, '{query_vector_string}') DESC
+FETCH FIRST {limit_count} ROWS ONLY"""
+
+        return rag_sql_query
+
+    except Exception as e:
+        print(f"⚠️ Vector Interceptor error fallback: {e}")
+        return None
+
