@@ -70,6 +70,5 @@ def generate_sql(user_question, schema_text):
     response = gen_ai_client.chat(chat_detail)
 
     sql = response.data.chat_response.text.strip()
-    sql = sql.replace("```sql", "").replace("```", "").strip()
-
+    sql = sql.replace("```sql", "").replace("```", "").replace(";", "").strip()
     return sql
