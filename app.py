@@ -93,12 +93,11 @@ def evaluate_ai_response():
     # """
 
     promp_payload = f"""
-    You are an expert Oracle SQL generator.
+        You are an expert Oracle SQL architect and natural language classifier.
     
-    Your task is to translate the user's natural language question into a valid Oracle SQL query.
+    Your task is to analyze the user's inquiry stream. You must determine if the total context accumulated across the conversation history is specific enough to build a definitive Oracle SQL query.
     
-    Use ONLY the table and columns listed in the schema.
-    
+    CRITICAL RULE: Look at the conversation history carefully. Do not repeat questions that the user has already answered! Read their previous responses to build your context.
 
     Database Schema:
     Table name: amazon
@@ -119,38 +118,30 @@ def evaluate_ai_response():
     - review_content (VARCHAR2): Review content
     - img_link (VARCHAR2): Product image link
     - product_link (VARCHAR2): Product page link
-        
-    Rules:
-    - Return ONLY the SQL query.
-    - Do not include explanations.
-    - Do not include markdown.
-    - Use Oracle SQL syntax.
-    - Use FETCH FIRST N ROWS ONLY instead of LIMIT.
-    - Generate SELECT queries only.
-    - IMPORTANT FOR NUMBERS: Columns like 'rating' and 'rating_count' may be stored as VARCHAR2. 
-      Always use TO_NUMBER(REGEXP_REPLACE(column_name, '[^0-9.]', '')) when filtering or sorting numeric calculations to safely handle formatting characters like commas or spaces.
+
+    HARD GRADUATION RULE:
+    Is force_generation equal to true? [Value: {force_generation}]
+    If force_generation is true, you MUST set "status": "success" and output your absolute best guess SELECT query using the columns available. Do not ask any more questions.
     
-    Example:
-    User Query:
-    Retrieve product names where the evaluation count is over 1000.
+    Rules for Classification (If force_generation is false):
+    1. If context is missing clear metrics, set "status": "ambiguous" and provide a NEW, explicit follow-up question in "follow_up_message". Leave "sql" as null.
+    2. If specific enough, set "status": "success", "follow_up_message": null, and generate the valid Oracle SQL string in "sql".
     
-    SQL Output:
-    SELECT product_name 
-    FROM AMAZON 
-    WHERE TO_NUMBER(REGEXP_REPLACE(rating_count, '[^0-9.]', '')) > 1000
-    ORDER BY TO_NUMBER(REGEXP_REPLACE(rating, '[^0-9.]', '')) DESC
-    FETCH FIRST 5 ROWS ONLY
+    SQL Generation Rules:
+    - Use Oracle SQL syntax. FETCH FIRST N ROWS ONLY instead of LIMIT.
+    - Generate SELECT queries only. No destructive commands.
+    - Always use TO_NUMBER(REGEXP_REPLACE(column_name, '[^0-9.]', '')) when filtering or sorting numeric columns like 'rating' and 'rating_count'.
     
-    Real Task:
-    User Query:
-    {user_question}
+    You MUST respond with a raw JSON object matching this structure exactly:
+    {{
+        "status": "success" or "ambiguous",
+        "follow_up_message": "Clarification question text here if ambiguous, otherwise null",
+        "sql": "The generated SQL query here if success, otherwise null"
+    }}
 
     Note: Dont add ; at the end of the SQL Query.
     
-    [CONVERSATION HISTORY TRACKER]
-    {conversation_history if "conversation_history" in locals() else ""}
-    
-    SQL Output:
+    Output:
     """
     
     try:
