@@ -1,4 +1,5 @@
 import streamlit as st
+from ai_sql_generator import generate_sql
 from db import run_sql
 
 SCHEMA_TEXT = """
@@ -28,10 +29,11 @@ if st.button("Run Query"):
     else:
         try:
             with st.spinner("Generating SQL..."):
+                sql = generate_sql(user_question, SCHEMA_TEXT)
                 
                 st.subheader("Generated SQL")
             with st.spinner("Running query on Oracle Database..."):
-                result_df = run_sql()
+                result_df = run_sql(sql)
             st.subheader("Query Result")
             st.dataframe(result_df)
         except Exception as e:
