@@ -6,8 +6,8 @@ connection = oracledb.connect(
     user="ADMIN",
     password="Password1234",
     dsn="amazonsales_low",
-    config_dir="/home/datascience/wallet",
-    wallet_location="/home/datascience/wallet",
+    config_dir="/home/opc/nl-query-agent/wallet",
+    wallet_location="/home/opc/nl-query-agent/wallet",
     wallet_password="Password1234"
 )
 
