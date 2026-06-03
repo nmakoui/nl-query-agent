@@ -53,11 +53,7 @@ def run_conversational_loop():
         
         Your task is to analyze the user's inquiry stream. You must determine if the total context accumulated across the conversation history is specific enough to build a definitive Oracle SQL query.
         
-        STRICT RULES:
-        1. Do not repeat questions that the user has already answered.
-        2. You MUST ONLY use the EXACT table name: 'amazon'. Do NOT use 'AMAZON_SALES'.
-        4. If the user asks for total sales, or number of products sold, every row is a sale. Use COUNT(*).
-
+        
         Database Schema:
         Table name: amazon
         Columns:
