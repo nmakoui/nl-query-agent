@@ -68,8 +68,12 @@ FORCE RULE: force_generation = {force_generation}
 If force_generation is true, you MUST output status "success" with your best-effort SQL. No more questions.
 
 DECISION RULES:
-1. If the request can be reasonably mapped to the schema, set "success" and write the SQL. Make sensible assumptions ("best" = highest rating, "popular" = highest rating_count).
-2. Only set "ambiguous" if something is genuinely unmappable without more info. Ask ONE focused question.
+1. DEFAULT TO AMBIGUOUS first. If the user's request could mean multiple things
+   (e.g. "best products" could mean highest rating OR most reviews), set "ambiguous"
+   and ask ONE specific question to clarify.
+2. Only set "success" if the request maps directly and unambiguously to the schema
+   with no interpretation needed (e.g. "show products with rating above 4").
+3. Once the history contains clarification answers, use them to generate SQL.
 
 SQL RULES:
 - Oracle syntax only. Use FETCH FIRST N ROWS ONLY, never LIMIT.
@@ -88,6 +92,8 @@ Respond ONLY with this raw JSON, no markdown, no extra text:
 
     try:
         raw_response = call_ai_inference_endpoint(prompt_payload)
+        with st.expander("🔍 Debug: Raw AI Response"):
+            st.code(raw_response)
         result_data = json.loads(raw_response, strict=False)
 
         if result_data.get("status") == "success" or force_generation == "true":
