@@ -83,6 +83,8 @@ def evaluate_ai_response():
         "follow_up_message": "Clarification question text here if ambiguous, otherwise null",
         "sql": "The generated SQL query here if success, otherwise null"
     }}
+
+    Note: Dont add ; at the end of the SQL Query.
     
     [CONVERSATION HISTORY TRACKER]
     {conversation_history if "conversation_history" in locals() else ""}
