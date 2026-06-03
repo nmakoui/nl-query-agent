@@ -52,7 +52,10 @@ def run_conversational_loop():
         You are an expert Oracle SQL architect and natural language classifier.
         
         Your task is to analyze the user's inquiry stream. You must determine if the total context accumulated across the conversation history is specific enough to build a definitive Oracle SQL query.
-        
+
+        STRICT RULES:
+        1. Do not repeat questions that the user has already answered.
+        2. You MUST ONLY use the EXACT table name: 'amazon'. Do NOT use 'AMAZON_SALES'.
         
         Database Schema:
         Table name: amazon
