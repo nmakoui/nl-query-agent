@@ -318,9 +318,17 @@ def run_conversational_loop():
         """
 
         try:
-            # Send payload to the OCI Endpoint and isolate JSON strings
+            # Send payload to the OCI Endpoint
             raw_response = call_ai_inference_endpoint(prompt_payload)
-            result_data = json.loads(raw_response)
+            
+            # --- FIXES APPLIED HERE ---
+            # 1. Clean out accidental markdown brackets if present
+            raw_response = raw_response.replace("```json", "").replace("```", "").strip()
+            # 2. Flatten raw newlines within text fields that upset strict JSON parsers
+            raw_response = raw_response.replace("\n", " ").replace("\r", " ")
+            # 3. Use strict=False to bypass structural control character panics
+            result_data = json.loads(raw_response, strict=False)
+            # --------------------------
             
             if result_data.get("status") == "success":
                 print("\n🎉 Success! SQL generated natively.")
@@ -344,12 +352,3 @@ def run_conversational_loop():
         except Exception as e:
             print(f"\n⚠️ Structural Parsing Exception hit: {e}. Defaulting emergency crash exit.")
             return True, conversation_history
-
-
-# Self-execution hook block for direct terminal invocation testing
-if __name__ == "__main__":
-    # Call loop engine function and unpack terminal parameters
-    success_flag, historical_log_data = run_conversational_loop()
-    
-    print("--- Final Historical Summary Metadata Returned to Host System ---")
-    print(historical_log_data)
