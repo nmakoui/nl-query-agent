@@ -91,61 +91,61 @@ def evaluate_ai_response():
     
     # Output:
     # """
- prompt_payload = f"""
-    You are an expert Oracle SQL generator.
-    
-    Your task is to translate the user's natural language question into a valid Oracle SQL query.
-    
-    Use ONLY the table and columns listed in the schema.
-    
-
-    Database Schema:
-    Table name: amazon
-    Columns:
-    - product_id (VARCHAR2): Product ID
-    - product_name (VARCHAR2): Product name
-    - category (VARCHAR2): Product category
-    - discounted_price (VARCHAR2): Discounted price
-    - actual_price (VARCHAR2): Original price
-    - discount_percentage (VARCHAR2): Discount percentage
-    - rating (VARCHAR2): Product rating
-    - rating_count (VARCHAR2): Number of ratings/reviews
-    - about_product (VARCHAR2): Product description
-    - user_id (VARCHAR2): User ID
-    - user_name (VARCHAR2): User name
-    - review_id (VARCHAR2): Review ID
-    - review_title (VARCHAR2): Review title
-    - review_content (VARCHAR2): Review content
-    - img_link (VARCHAR2): Product image link
-    - product_link (VARCHAR2): Product page link
+     prompt_payload = f"""
+        You are an expert Oracle SQL generator.
         
-    Rules:
-    - Return ONLY the SQL query.
-    - Do not include explanations.
-    - Do not include markdown.
-    - Use Oracle SQL syntax.
-    - Use FETCH FIRST N ROWS ONLY instead of LIMIT.
-    - Generate SELECT queries only.
-    - IMPORTANT FOR NUMBERS: Columns like 'rating' and 'rating_count' may be stored as VARCHAR2. 
-      Always use TO_NUMBER(REGEXP_REPLACE(column_name, '[^0-9.]', '')) when filtering or sorting numeric calculations to safely handle formatting characters like commas or spaces.
+        Your task is to translate the user's natural language question into a valid Oracle SQL query.
+        
+        Use ONLY the table and columns listed in the schema.
+        
     
-    Example:
-    User Query:
-    Retrieve product names where the evaluation count is over 1000.
-    
-    SQL Output:
-    SELECT product_name 
-    FROM AMAZON 
-    WHERE TO_NUMBER(REGEXP_REPLACE(rating_count, '[^0-9.]', '')) > 1000
-    ORDER BY TO_NUMBER(REGEXP_REPLACE(rating, '[^0-9.]', '')) DESC
-    FETCH FIRST 5 ROWS ONLY
-    
-    Real Task:
-    User Query:
-    {user_question}
-    
-    SQL Output:
-    """
+        Database Schema:
+        Table name: amazon
+        Columns:
+        - product_id (VARCHAR2): Product ID
+        - product_name (VARCHAR2): Product name
+        - category (VARCHAR2): Product category
+        - discounted_price (VARCHAR2): Discounted price
+        - actual_price (VARCHAR2): Original price
+        - discount_percentage (VARCHAR2): Discount percentage
+        - rating (VARCHAR2): Product rating
+        - rating_count (VARCHAR2): Number of ratings/reviews
+        - about_product (VARCHAR2): Product description
+        - user_id (VARCHAR2): User ID
+        - user_name (VARCHAR2): User name
+        - review_id (VARCHAR2): Review ID
+        - review_title (VARCHAR2): Review title
+        - review_content (VARCHAR2): Review content
+        - img_link (VARCHAR2): Product image link
+        - product_link (VARCHAR2): Product page link
+            
+        Rules:
+        - Return ONLY the SQL query.
+        - Do not include explanations.
+        - Do not include markdown.
+        - Use Oracle SQL syntax.
+        - Use FETCH FIRST N ROWS ONLY instead of LIMIT.
+        - Generate SELECT queries only.
+        - IMPORTANT FOR NUMBERS: Columns like 'rating' and 'rating_count' may be stored as VARCHAR2. 
+          Always use TO_NUMBER(REGEXP_REPLACE(column_name, '[^0-9.]', '')) when filtering or sorting numeric calculations to safely handle formatting characters like commas or spaces.
+        
+        Example:
+        User Query:
+        Retrieve product names where the evaluation count is over 1000.
+        
+        SQL Output:
+        SELECT product_name 
+        FROM AMAZON 
+        WHERE TO_NUMBER(REGEXP_REPLACE(rating_count, '[^0-9.]', '')) > 1000
+        ORDER BY TO_NUMBER(REGEXP_REPLACE(rating, '[^0-9.]', '')) DESC
+        FETCH FIRST 5 ROWS ONLY
+        
+        Real Task:
+        User Query:
+        {user_question}
+        
+        SQL Output:
+        """
   
     
     try:
