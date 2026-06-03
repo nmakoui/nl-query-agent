@@ -216,10 +216,10 @@
 # '''
 
 
-# import json
-# import oci
-# from oci.generative_ai_inference import GenerativeAiInferenceClient
-# from oci.generative_ai_inference.models import OnDemandServingMode, ChatDetails, CohereChatRequest
+import json
+import oci
+from oci.generative_ai_inference import GenerativeAiInferenceClient
+from oci.generative_ai_inference.models import OnDemandServingMode, ChatDetails, CohereChatRequest
 
 def call_ai_inference_endpoint(prompt_payload):
     """
