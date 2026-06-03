@@ -28,14 +28,27 @@ def generate_sql(user_question, schema_text):
     
     Use ONLY the table and columns listed in the schema.
     
+
     Database Schema:
-    Table name: AMAZON
+    Table name: amazon
     Columns:
-    - product_id (VARCHAR2)
-    - product_name (VARCHAR2)
-    - rating (NUMBER)
-    - rating_count (NUMBER)
-    
+    - product_id (VARCHAR2): Product ID
+    - product_name (VARCHAR2): Product name
+    - category (VARCHAR2): Product category
+    - discounted_price (VARCHAR2): Discounted price
+    - actual_price (VARCHAR2): Original price
+    - discount_percentage (VARCHAR2): Discount percentage
+    - rating (VARCHAR2): Product rating
+    - rating_count (VARCHAR2): Number of ratings/reviews
+    - about_product (VARCHAR2): Product description
+    - user_id (VARCHAR2): User ID
+    - user_name (VARCHAR2): User name
+    - review_id (VARCHAR2): Review ID
+    - review_title (VARCHAR2): Review title
+    - review_content (VARCHAR2): Review content
+    - img_link (VARCHAR2): Product image link
+    - product_link (VARCHAR2): Product page link
+        
     Rules:
     - Return ONLY the SQL query.
     - Do not include explanations.
