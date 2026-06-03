@@ -29,7 +29,7 @@ def generate_sql(user_question, schema_text):
     Use ONLY the table and columns listed in the schema.
     
     Database Schema:
-    Table name: amazon
+    Table name: AMAZON
     Columns:
     - product_id (VARCHAR2)
     - product_name (VARCHAR2)
@@ -51,7 +51,7 @@ def generate_sql(user_question, schema_text):
     
     SQL Output:
     SELECT product_id, product_name
-    FROM amazon
+    FROM AMAZON
     ORDER BY rating DESC
     FETCH FIRST 3 ROWS ONLY
     
