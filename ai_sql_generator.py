@@ -330,7 +330,6 @@ def run_conversational_loop():
             
             if result_data.get("status") == "success" or force_generation == "true":
                 print("\n🎉 Success! SQL generated natively.")
-                return True, str(raw_text).replace(";", "").strip()
                 print(f"Generated SQL: {result_data.get('sql')}\n")
                 
                 conversation_history += f"\nFinal Generated SQL Statement: {result_data.get('sql')}"
