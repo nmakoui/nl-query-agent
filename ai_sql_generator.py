@@ -2,7 +2,7 @@
 #     return user_question
 
 
-import oci
+'''import oci
 from oci.generative_ai_inference import GenerativeAiInferenceClient
 from oci.generative_ai_inference.models import OnDemandServingMode, ChatDetails, CohereChatRequest
 import json
@@ -201,3 +201,131 @@ def process_interactive_query(user_question):
     except Exception as e:
         # Crash fallback: assume success and return whatever raw string text came back
         return True, str(raw_text).replace(";", "").strip()
+'''
+
+
+import json
+import oci
+from oci.generative_ai_inference import GenerativeAiInferenceClient
+from oci.generative_ai_inference.models import OnDemandServingMode, ChatDetails, CohereChatRequest
+
+def call_ai_inference_endpoint(prompt_payload):
+    """
+    Internal helper to execute the raw network invocation call to the OCI AI platform.
+    """
+    signer = oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
+    gen_ai_client = GenerativeAiInferenceClient(
+        config={},
+        signer=signer,
+        service_endpoint="https://inference.generativeai.uk-london-1.oci.oraclecloud.com"
+    )
+    compartment_id = "ocid1.tenancy.oc1..aaaaaaaapigjcw7dwdp6onerp5wqcu3z5pzsckmokdiqjezvoodfi2corv6q"
+    model_id = "cohere.command-r-plus-08-2024"
+
+    chat_request = CohereChatRequest()
+    chat_request.message = prompt_payload
+    chat_request.max_tokens = 500
+    chat_request.temperature = 0.0
+
+    chat_detail = ChatDetails()
+    chat_detail.compartment_id = compartment_id
+    chat_detail.serving_mode = OnDemandServingMode(model_id=model_id)
+    chat_detail.chat_request = chat_request
+
+    response = gen_ai_client.chat(chat_detail)
+    raw_text = response.data.chat_response.text.strip()
+    return raw_text.replace("```json", "").replace("```", "").strip()
+
+
+def run_conversational_loop():
+    """
+    Main loop function that handles interactive terminal testing.
+    Keeps prompting the user until a specific SQL query can be constructed.
+    
+    Returns:
+        status (bool): Always returns True upon successful exit.
+        history_summary (str): The condensed conversation log format.
+    """
+    print("\n--- Starting Natural Language Query Loop ---")
+    initial_prompt = input("Enter your initial database query: ")
+    
+    # Initialize the history tracker as an AI-scannable dialogue log string
+    conversation_history = f"Initial User Query: {initial_prompt}"
+    
+    current_query_context = initial_prompt
+    loop_active = True
+
+    while loop_active:
+        # Build the dynamic instruction payload containing schema, rules, and history
+        prompt_payload = f"""
+        You are an expert Oracle SQL architect and natural language classifier.
+        
+        Your task is to analyze the user's inquiry stream. You must determine if the total context accumulated across the conversation history is specific enough to build a definitive Oracle SQL query, or if it remains too general/ambiguous.
+        
+        Database Schema:
+        Table name: amazon
+        Columns:
+        - product_id (VARCHAR2)
+        - product_name (VARCHAR2)
+        - rating (NUMBER)
+        - rating_count (NUMBER)
+        
+        Rules for Classification:
+        1. If the accumulated context is too general or missing clear numeric criteria, set "status": "ambiguous" and provide a helpful, explicit follow-up question in "follow_up_message" asking for the next logical piece of specification. Leave "sql" as null.
+        2. If the context is specific enough to map directly to the schema layout columns, set "status": "success", "follow_up_message": null, and generate the valid Oracle SQL string in "sql".
+        
+        SQL Generation Rules (Only if status is success):
+        - Use Oracle SQL syntax.
+        - Use FETCH FIRST N ROWS ONLY instead of LIMIT.
+        - Generate SELECT queries only. No destructive commands.
+        - Always use TO_NUMBER(REGEXP_REPLACE(column_name, '[^0-9.]', '')) when filtering or sorting numeric columns like 'rating' and 'rating_count'.
+        
+        You MUST respond with a raw JSON object matching this structure exactly:
+        {{
+            "status": "success" or "ambiguous",
+            "follow_up_message": "Clarification question text here if ambiguous, otherwise null",
+            "sql": "The generated SQL query here if success, otherwise null"
+        }}
+        
+        Accumulated Conversation History Context to Analyze:
+        {conversation_history}
+        
+        Output:
+        """
+
+        try:
+            # Send payload to the OCI Endpoint and isolate JSON strings
+            raw_response = call_ai_inference_endpoint(prompt_payload)
+            result_data = json.loads(raw_response)
+            
+            if result_data.get("status") == "success":
+                print("\n🎉 Success! SQL generated natively.")
+                print(f"Generated SQL: {result_data.get('sql')}\n")
+                
+                # Append final solution state parameters to the historical context log
+                conversation_history += f"\nFinal Generated SQL Statement: {result_data.get('sql')}"
+                
+                # Turn off the execution circuit loop flag
+                loop_active = False
+                return True, conversation_history
+                
+            else:
+                # Prompt evaluated to Ambiguous -> Trigger conversational extraction loop step
+                print(f"\n🤖 Follow-up Question from AI: {result_data.get('follow_up_message')}")
+                user_clarification = input("Your response: ")
+                
+                # Append the new transactional layer to our structured metadata log string
+                conversation_history += f"\nAI Clarification Question Asked: {result_data.get('follow_up_message')}\nUser Clarification Answer Provided: {user_clarification}"
+                
+        except Exception as e:
+            print(f"\n⚠️ Structural Parsing Exception hit: {e}. Defaulting emergency crash exit.")
+            return True, conversation_history
+
+
+# Self-execution hook block for direct terminal invocation testing
+if __name__ == "__main__":
+    # Call loop engine function and unpack terminal parameters
+    success_flag, historical_log_data = run_conversational_loop()
+    
+    print("--- Final Historical Summary Metadata Returned to Host System ---")
+    print(historical_log_data)
