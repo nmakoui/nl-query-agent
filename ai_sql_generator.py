@@ -56,17 +56,19 @@ def generate_sql(user_question, schema_text):
     - Use Oracle SQL syntax.
     - Use FETCH FIRST N ROWS ONLY instead of LIMIT.
     - Generate SELECT queries only.
-    - Do not generate INSERT, UPDATE, DELETE, DROP, ALTER, CREATE, TRUNCATE, MERGE, GRANT, or REVOKE statements.
+    - IMPORTANT FOR NUMBERS: Columns like 'rating' and 'rating_count' may be stored as VARCHAR2. 
+      Always use TO_NUMBER(REGEXP_REPLACE(column_name, '[^0-9.]', '')) when filtering or sorting numeric calculations to safely handle formatting characters like commas or spaces.
     
     Example:
     User Query:
-    Retrieve the IDs and names of the top 3 products with the highest rating.
+    Retrieve product names where the evaluation count is over 1000.
     
     SQL Output:
-    SELECT product_id, product_name
-    FROM AMAZON
-    ORDER BY rating DESC
-    FETCH FIRST 3 ROWS ONLY
+    SELECT product_name 
+    FROM AMAZON 
+    WHERE TO_NUMBER(REGEXP_REPLACE(rating_count, '[^0-9.]', '')) > 1000
+    ORDER BY TO_NUMBER(REGEXP_REPLACE(rating, '[^0-9.]', '')) DESC
+    FETCH FIRST 5 ROWS ONLY
     
     Real Task:
     User Query:
