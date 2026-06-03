@@ -247,40 +247,37 @@ def call_ai_inference_endpoint(prompt_payload):
     response = gen_ai_client.chat(chat_detail)
     raw_text = response.data.chat_response.text.strip()
     
-    # --- TARGETED FIX APPLIED HERE ---
-    # Strip markdown headers and flatten illegal text control carriage returns
+    # Clean formatting strings
     raw_text = raw_text.replace("```json", "").replace("```", "").strip()
     raw_text = raw_text.replace("\n", " ").replace("\r", " ")
-    
-    # Return the clean raw string text so json.loads works in the main loop
     return raw_text
 
 
 def run_conversational_loop():
-    """
-    Main loop function that handles interactive terminal testing.
-    Keeps prompting the user until a specific SQL query can be constructed.
-    
-    Returns:
-        status (bool): Always returns True upon successful exit.
-        history_summary (str): The condensed conversation log format.
-    """
     print("\n--- Starting Natural Language Query Loop ---")
     initial_prompt = input("Enter your initial database query: ")
     
-    # Initialize the history tracker as an AI-scannable dialogue log string
+    # Initialize history tracking
     conversation_history = f"Initial User Query: {initial_prompt}"
-    
-    current_query_context = initial_prompt
     loop_active = True
+    
+    # --- FIX 2: HARD CAP TURN COUNTER ---
+    follow_up_count = 0  
 
     while loop_active:
-        # Build the dynamic instruction payload containing schema, rules, and history
+        # Check if we need to force the AI to wrap it up
+        force_generation = "false"
+        if follow_up_count >= 3:
+            force_generation = "true"
+
+        # SYSTEM PROMPT STAYS STATIC - history updates dynamically
         prompt_payload = f"""
         You are an expert Oracle SQL architect and natural language classifier.
         
-        Your task is to analyze the user's inquiry stream. You must determine if the total context accumulated across the conversation history is specific enough to build a definitive Oracle SQL query, or if it remains too general/ambiguous.
+        Your task is to analyze the user's inquiry stream. You must determine if the total context accumulated across the conversation history is specific enough to build a definitive Oracle SQL query.
         
+        CRITICAL RULE: Look at the conversation history carefully. Do not repeat questions that the user has already answered! Read their previous responses to build your context.
+
         Database Schema:
         Table name: amazon
         Columns:
@@ -300,14 +297,17 @@ def run_conversational_loop():
         - review_content (VARCHAR2): Review content
         - img_link (VARCHAR2): Product image link
         - product_link (VARCHAR2): Product page link
+
+        HARD GRADUATION RULE:
+        Is force_generation equal to true? [Value: {force_generation}]
+        If force_generation is true, you MUST set "status": "success" and output your absolute best guess SELECT query using the columns available. Do not ask any more questions.
         
-        Rules for Classification:
-        1. If the accumulated context is too general or missing clear numeric criteria, set "status": "ambiguous" and provide a helpful, explicit follow-up question in "follow_up_message" asking for the next logical piece of specification. Leave "sql" as null.
-        2. If the context is specific enough to map directly to the schema layout columns, set "status": "success", "follow_up_message": null, and generate the valid Oracle SQL string in "sql".
+        Rules for Classification (If force_generation is false):
+        1. If context is missing clear metrics, set "status": "ambiguous" and provide a NEW, explicit follow-up question in "follow_up_message". Leave "sql" as null.
+        2. If specific enough, set "status": "success", "follow_up_message": null, and generate the valid Oracle SQL string in "sql".
         
-        SQL Generation Rules (Only if status is success):
-        - Use Oracle SQL syntax.
-        - Use FETCH FIRST N ROWS ONLY instead of LIMIT.
+        SQL Generation Rules:
+        - Use Oracle SQL syntax. FETCH FIRST N ROWS ONLY instead of LIMIT.
         - Generate SELECT queries only. No destructive commands.
         - Always use TO_NUMBER(REGEXP_REPLACE(column_name, '[^0-9.]', '')) when filtering or sorting numeric columns like 'rating' and 'rating_count'.
         
@@ -318,45 +318,37 @@ def run_conversational_loop():
             "sql": "The generated SQL query here if success, otherwise null"
         }}
         
-        Accumulated Conversation History Context to Analyze:
+        [CONVERSATION HISTORY TRACKER]
         {conversation_history}
         
         Output:
         """
 
         try:
-            # Send payload to the OCI Endpoint
             raw_response = call_ai_inference_endpoint(prompt_payload)
-            
-            # --- FIXES APPLIED HERE ---
-            # 1. Clean out accidental markdown brackets if present
-            raw_response = raw_response.replace("```json", "").replace("```", "").strip()
-            # 2. Flatten raw newlines within text fields that upset strict JSON parsers
-            raw_response = raw_response.replace("\n", " ").replace("\r", " ")
-            # 3. Use strict=False to bypass structural control character panics
             result_data = json.loads(raw_response, strict=False)
-            # --------------------------
             
-            if result_data.get("status") == "success":
+            if result_data.get("status") == "success" or force_generation == "true":
                 print("\n🎉 Success! SQL generated natively.")
                 print(f"Generated SQL: {result_data.get('sql')}\n")
                 
-                # Append final solution state parameters to the historical context log
                 conversation_history += f"\nFinal Generated SQL Statement: {result_data.get('sql')}"
-                
-                # Turn off the execution circuit loop flag
                 loop_active = False
                 return True, conversation_history
                 
             else:
-                # Prompt evaluated to Ambiguous -> Trigger conversational extraction loop step
-                print(f"\n🤖 Follow-up Question from AI: {result_data.get('follow_up_message')}")
+                # Increment the follow-up tracker
+                follow_up_count += 1
+                
+                print(f"\n🤖 Follow-up Question from AI ({follow_up_count}/3): {result_data.get('follow_up_message')}")
                 user_clarification = input("Your response: ")
                 
-                # Append the new transactional layer to our structured metadata log string
+                # Append the new conversation slice to the ongoing history string block
                 conversation_history += f"\nAI Clarification Question Asked: {result_data.get('follow_up_message')}\nUser Clarification Answer Provided: {user_clarification}"
                 
         except Exception as e:
             print(f"\n⚠️ Structural Parsing Exception hit: {e}. Defaulting emergency crash exit.")
             return True, conversation_history
-            return True, conversation_history
+
+if __name__ == "__main__":
+    run_conversational_loop()
