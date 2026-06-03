@@ -10,7 +10,7 @@ gen_ai_client = oci.generative_ai_inference.GenerativeAiInferenceClient(
 
 # --- CONFIGURATION HUB ---
 COMPARTMENT_ID = "ocid1.tenancy.oc1..aaaaaaaapigjcw7dwdp6onerp5wqcu3z5pzsckmokdiqjezvoodfi2corv6q" # Merged from your sql generator
-CONNECTION_STRING = "(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.uk-london-1.oraclecloud.com))(connect_data=(service_name=g3611c40115fb3c_amazonsales_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))"
+CONNECTION_STRING = "(description=(retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.uk-london-1.oraclecloud.com))(connect_data=(service_name=g3611c40115fb3c_amazon_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))"
 
 print("Connecting to Autonomous Database...")
 conn = oracledb.connect(user="ADMIN", password="Password1234", dsn=CONNECTION_STRING)
