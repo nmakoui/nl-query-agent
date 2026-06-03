@@ -271,14 +271,18 @@ def run_conversational_loop():
             force_generation = "true"
 
         # SYSTEM PROMPT STAYS STATIC - history updates dynamically
-        prompt_payload = f"""
+        prompt payload = f"""
         You are an expert Oracle SQL architect and natural language classifier.
         
         Your task is to analyze the user's inquiry stream. You must determine if the total context accumulated across the conversation history is specific enough to build a definitive Oracle SQL query.
         
-        CRITICAL RULE: Look at the conversation history carefully. Do not repeat questions that the user has already answered! Read their previous responses to build your context.
+        CRITICAL RULE 1: Look at the conversation history carefully. Do not repeat questions that the user has already answered! Read their previous responses to build your context.
+        
+        CRITICAL RULE 2: You MUST ONLY use the exact table name and columns provided in the schema definition below. Do NOT hallucinate table names like 'AMAZON_SALES' or column names like 'SALES'. 
+        
+        CRITICAL RULE 3: If the user asks for "total sales", "number of sales", or "sales volume", treat EVERY SINGLE ROW in the table as a separate sale. Therefore, calculate total sales using COUNT(*) from the 'amazon' table.
 
-        Database Schema:
+        Database Schema (USE ONLY THESE):
         Table name: amazon
         Columns:
         - product_id (VARCHAR2): Product ID
@@ -323,7 +327,6 @@ def run_conversational_loop():
         
         Output:
         """
-
         try:
             raw_response = call_ai_inference_endpoint(prompt_payload)
             result_data = json.loads(raw_response, strict=False)
