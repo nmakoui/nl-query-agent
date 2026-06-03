@@ -106,12 +106,12 @@ def run_conversational_loop():
             # --- THE HALLUCINATION RADAR ---
             # If the AI hallucinated a bad table or column, we INTERCEPT IT right here 
             # and automatically correct it before your interface or terminal crashes.
-            if result_data.get("sql"):
-                sql_str = result_data["sql"].upper()
-                if "FROM AMAZON_SALES" in sql_str:
-                    result_data["sql"] = result_data["sql"].replace("AMAZON_SALES", "amazon").replace("amazon_sales", "amazon")
-                if "SUM(SALES)" in sql_str or "COUNT(SALES)" in sql_str:
-                    result_data["sql"] = "SELECT COUNT(*) AS total_sales FROM amazon"
+            # if result_data.get("sql"):
+            #     sql_str = result_data["sql"].upper()
+            #     if "FROM AMAZON_SALES" in sql_str:
+            #         result_data["sql"] = result_data["sql"].replace("AMAZON_SALES", "amazon").replace("amazon_sales", "amazon")
+            #     if "SUM(SALES)" in sql_str or "COUNT(SALES)" in sql_str:
+            #         result_data["sql"] = "SELECT COUNT(*) AS total_sales FROM amazon"
             
             if result_data.get("status") == "success" or force_generation == "true":
                 print("\n🎉 Success! SQL generated natively.")
