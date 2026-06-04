@@ -319,3 +319,16 @@ with st.sidebar:
         if st.button("Clear history"):
             st.session_state.history = []   
             st.rerun()
+
+# ── Conversational Chat Tab ────────────────────────────────────
+# We add a dedicated tab for a multi‑turn conversational assistant. This
+# functionality lives in `chat_tab.py` and does not interfere with the
+# existing single‑query flow above. The chat tab appears at the bottom of
+# the main page, outside of the result flow, so users can interact with a
+# chat‑based SQL generator that remembers context across turns.
+
+tab_chat, = st.tabs(["💬 Chat Assistant"])
+with tab_chat:
+    # Import lazily within the tab context to avoid circular imports at startup
+    from chat_tab import render_chat_tab
+    render_chat_tab()
