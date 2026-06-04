@@ -136,8 +136,12 @@ def render_insight_tab() -> None:
         option_labels.append(label)
         options.append(item)
 
+    # Assign a unique key to avoid duplicate element IDs across different tabs
     selected_index = st.selectbox(
-        "Choose a query to analyze", options=list(range(len(options))), format_func=lambda i: option_labels[i]
+        "Choose a query to analyze",
+        options=list(range(len(options))),
+        format_func=lambda i: option_labels[i],
+        key="insights_query_selectbox",
     )
 
     if selected_index is None:
