@@ -86,8 +86,8 @@ Rules for Classification (If force_generation is false):
 SQL Generation Rules:
 - Use Oracle SQL syntax. FETCH FIRST N ROWS ONLY instead of LIMIT.
 - Generate SELECT queries only. No destructive commands.
-- When operating on numeric values stored as strings (e.g. 'rating', 'rating_count', 'discount_percentage', 'discounted_price', 'actual_price'), always convert them to numbers using `TO_NUMBER(REGEXP_REPLACE(column_name, '[^0-9.]', ''))`. This applies to filtering, sorting, and aggregation functions (e.g. SUM, AVG). For example, use `AVG(TO_NUMBER(REGEXP_REPLACE(discount_percentage, '[^0-9.]', '')))`. Avoid using the raw string columns in numeric functions.
-- To extract the top‑level category use: SUBSTR(category, 1, INSTR(category || '|', '|') - 1)
+- Always use TO_NUMBER(REGEXP_REPLACE(column_name, '[^0-9.]', '')) when filtering or sorting numeric columns like 'rating' and 'rating_count'.
+- To extract top‑level category use: SUBSTR(category, 1, INSTR(category || '|', '|') - 1)
 - Do not include a semicolon at the end of the query.
 
 You MUST respond with a raw JSON object matching this structure exactly:
