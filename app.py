@@ -333,11 +333,23 @@ with tab_chat:
     from chat_tab import render_chat_tab
     render_chat_tab()
 
-# ── Follow-Up Suggestions Tab ────────────────────────────────────
-# This tab is isolated from the existing query flow. It reads previous
-# query history and suggests useful next questions users can run.
-tab_followups, = st.tabs(["✨ Follow-Up Suggestions"])
+# ── AI Insights Tab ────────────────────────────────────────────────
+# The AI Insights tab allows users to generate analytical observations
+# from previous query results. It does not interfere with the
+# existing execution flow. Users can pick a past query and produce
+# insights summarising patterns, trends, or anomalies within the result.
+tab_ai_insights, = st.tabs(["🧠 AI Insights"])
+with tab_ai_insights:
+    from insight_tab import render_insight_tab
+    render_insight_tab()
+
+# ── Follow‑Up Suggestions Tab ──────────────────────────────────
+# This tab leverages the history of previously executed queries to generate
+# follow‑up questions that can help users explore their data further. It
+# operates independently from other functionality and does not modify
+# the main query flow. Suggestions can be inserted back into the query
+# input using the provided buttons.
+tab_followups, = st.tabs(["✨ Follow‑Up Suggestions"])
 with tab_followups:
     from followup_suggestions_tab import render_followup_suggestions_tab
     render_followup_suggestions_tab()
-
