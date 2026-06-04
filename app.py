@@ -255,7 +255,7 @@ if user_question and (run_button or st.session_state.get("original_q") == user_q
                 )
 
             with tab_insights:
-                st.subheader("Summary")
+                st.subheader("Explanation:")
                 
                 try:
                     explanation_text = sql_explanation(final_sql)
@@ -307,7 +307,7 @@ with st.sidebar:
                 st.caption(item["time"])
                 st.caption("Generated SQL:")
                 st.code(item["sql"], language="sql")
-                st.caption("Explanation:")
+                st.caption("Summary:")
                 st.write(item["summary"])
                 if st.button("Run Again", key=f"rerun_{i}"):
                     st.session_state.prefill = item["question"]
