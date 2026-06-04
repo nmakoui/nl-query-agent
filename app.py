@@ -5,6 +5,7 @@ from datetime import datetime
 from ai_sql_generator import call_ai_inference_endpoint
 from validator import validate_sql
 from db import run_sql
+from sql_explanation import sql_explanation
 
 # ── Page Config ──────────────────────────────────────────────────
 st.set_page_config(page_title="QueryLens · AI Data Assistant", page_icon="🔍", layout="wide")
@@ -255,7 +256,18 @@ if user_question and (run_button or st.session_state.get("original_q") == user_q
 
             with tab_insights:
                 st.subheader("Summary")
-                st.write(f"Your query returned {len(result_df)} rows across {len(result_df.columns)} columns.")
+                
+                try:
+                    explanation_text = sql_explanation(final_sql)
+                except Exception as e:
+                    explanation_text = None
+                    st.warning(f"Could not generate SQL explanation: {e}")
+                
+                if explanation_text:
+                    st.markdown(explanation_text)
+                else:
+                    st.info("SQL explanation was not available for this query.")
+                
                 st.divider()
 
                 num_cols = result_df.select_dtypes(include="number").columns.tolist()
