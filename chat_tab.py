@@ -141,6 +141,18 @@ def render_chat_tab() -> None:
         "with follow‑up questions, and the assistant will remember the context."
     )
 
+    # Show a collapsible list of past queries from the main QueryLens interface. This
+    # gives the conversational assistant access to the broader question history
+    # outside of the chat context. Users can expand this section to review
+    # previous questions they asked through the non‑chat interface.
+    main_history = st.session_state.get("history", [])
+    if main_history:
+        with st.expander("Previous Queries", expanded=False):
+            for item in main_history:
+                q = item.get("question", "").strip()
+                if q:
+                    st.markdown(f"- {q}")
+
     # Initialize session state variables for the chat
     if "chat_messages" not in st.session_state:
         st.session_state.chat_messages = []  # list of dicts with keys: role ('user'/'assistant'), content
@@ -204,8 +216,21 @@ def render_chat_tab() -> None:
 
         # Evaluate the conversation state via the AI endpoint
         with st.spinner("Analyzing your request…"):
+            # Build a context string that includes past queries from the main
+            # interface along with the current chat conversation history. This
+            # allows the assistant to incorporate broader context when
+            # generating SQL or clarifications.
+            history_context = ""
+            main_history = st.session_state.get("history", [])
+            if main_history:
+                history_context += "Past User Queries:\n"
+                for item in main_history:
+                    q = item.get("question", "").strip()
+                    if q:
+                        history_context += f"- {q}\n"
+            conversation_input = history_context + st.session_state.chat_conversation_history
             ai_result = _evaluate_chat_response(
-                conversation_history=st.session_state.chat_conversation_history,
+                conversation_history=conversation_input,
                 follow_up_count=st.session_state.chat_follow_up_count,
             )
 
