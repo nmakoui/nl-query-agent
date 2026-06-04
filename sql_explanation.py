@@ -1,10 +1,52 @@
+from textwrap import dedent
+import re
+
 from ai_sql_generator import call_ai_inference_endpoint
 
 
-def sql_explanation(sql_query):
+def format_sql_explanation(text: str) -> str:
+    """
+    Clean and format the AI explanation so Streamlit displays it nicely.
+    """
 
-    
-    prompt_payload = f"""
+    if not text:
+        return "SQL explanation was not available."
+
+    text = text.strip()
+
+    # Remove unwanted leading label if model returns it
+    text = re.sub(r"^Explanation:\s*", "", text, flags=re.IGNORECASE)
+
+    # Force section headers onto new lines
+    section_headers = [
+        "Query Summary:",
+        "Step-by-Step Breakdown:",
+        "Final Output:",
+        "Potential Notes:",
+    ]
+
+    for header in section_headers:
+        text = text.replace(header, f"\n\n### {header}")
+
+    # Force numbered steps onto separate lines
+    text = re.sub(r"\s+(\d+\.)\s+", r"\n\n\1 ", text)
+
+    # Clean excessive blank lines
+    text = re.sub(r"\n{3,}", "\n\n", text)
+
+    return text.strip()
+
+
+def sql_explanation(sql_query: str) -> str:
+    """
+    Generate a plain-English explanation for a SQL query using the same AI backend
+    already used by app.py.
+    """
+
+    if not sql_query:
+        return "SQL explanation was not available because no SQL query was provided."
+
+    prompt_payload = dedent(f"""
     You are an expert SQL explanation assistant.
     
     Your task is to explain a generated SQL query to a non-technical or semi-technical user. Whenever I give you a SQL query, explain what it does clearly and accurately.
@@ -160,10 +202,10 @@ def sql_explanation(sql_query):
     SQL Query:
     {sql_query}
     
-    """
-    
+    """).strip()
+
     try:
         explanation = call_ai_inference_endpoint(prompt_payload)
-        return explanation.strip() if explanation else "SQL explanation was not available."
+        return format_sql_explanation(explanation)
     except Exception as e:
         return f"SQL explanation could not be generated: {e}"
