@@ -269,7 +269,7 @@ if user_question and (run_button or st.session_state.get("original_q") == user_q
                 #     st.info("SQL explanation was not available for this query.")
                 
                 # st.divider()
-                st.subheader("Summary")
+                st.subheader("Explanation")
                 st.markdown(sql_explanation(final_sql))
                 st.divider()
 
