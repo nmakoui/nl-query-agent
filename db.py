@@ -2,8 +2,11 @@ import os
 import oracledb
 import pandas as pd
 import streamlit as st
+from dotenv import load_dotenv
 
-# We use st.cache_resource to ensure the connection pool is created ONCE 
+load_dotenv()  # loads variables from a local .env file (never committed)
+
+# We use st.cache_resource to ensure the connection pool is created ONCE
 # and shared across all user sessions and reruns.
 @st.cache_resource
 def get_connection_pool():
@@ -11,12 +14,12 @@ def get_connection_pool():
     Initializes and caches a secure Oracle connection pool using the provided wallet.
     """
     return oracledb.create_pool(
-        user="ADMIN",
-        password="Password1234",
-        dsn="amazonsales_low",
-        config_dir="/home/opc/nl-query-agent/wallet",
-        wallet_location="/home/opc/nl-query-agent/wallet",
-        wallet_password="Password1234",
+        user=os.environ["DB_USER"],
+        password=os.environ["DB_PASSWORD"],
+        dsn=os.environ["DB_DSN"],
+        config_dir=os.environ["WALLET_LOCATION"],
+        wallet_location=os.environ["WALLET_LOCATION"],
+        wallet_password=os.environ["WALLET_PASSWORD"],
         min=1,     # Minimum number of active connections to keep open
         max=5,     # Maximum connections the pool can scale to
         increment=1
@@ -29,8 +32,8 @@ def run_sql(query="SELECT * FROM AMAZON FETCH FIRST 10 ROWS ONLY"):
     """
     # Get our cached connection pool
     pool = get_connection_pool()
-    
-    # 'with pool.acquire()' guarantees the connection drops back to the pool 
+
+    # 'with pool.acquire()' guarantees the connection drops back to the pool
     # even if the query execution fails mid-way.
     with pool.acquire() as conn:
         df = pd.read_sql(query, conn)
